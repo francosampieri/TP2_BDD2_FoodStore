@@ -4,14 +4,14 @@ Base de datos relacional para el sistema de gestión de pedidos gastronómicos *
 
 ---
 
-## 📋 Requisitos Previos
+## Requisitos Previos
 
 - **PostgreSQL** 14 o superior instalado.
 - Cliente SQL: **pgAdmin 4**, **DBeaver**, **VS Code (extensión PostgreSQL)** o la terminal interactiva **`psql`**.
 
 ---
 
-## 🚀 1. Creación de la Base de Datos
+## 1. Creación de la Base de Datos
 
 Ejecuta el siguiente comando en tu cliente SQL o terminal:
 
@@ -23,7 +23,7 @@ CREATE DATABASE "FoodStore";
 
 ---
 
-## 🗂️ 2. Orden de Ejecución de los Scripts
+## 2. Orden de Ejecución de los Scripts
 
 Los scripts deben ejecutarse estrictamente en el siguiente orden secuencial para garantizar la integridad referencial y las dependencias de objetos:
 
@@ -36,7 +36,7 @@ Los scripts deben ejecutarse estrictamente en el siguiente orden secuencial para
 
 ---
 
-## 🧪 3. Cómo Reproducir las Pruebas
+## 3. Cómo Reproducir las Pruebas
 
 Para validar el correcto funcionamiento del modelo, las restricciones de integridad y la lógica de negocio, ejecuta las siguientes pruebas en `FoodStore`:
 
