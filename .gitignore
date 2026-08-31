@@ -1,0 +1,10 @@
+# Local database backups can be large and may contain data; keep them outside Git.
+backups/
+*.backup
+*.dump
+*.sql.gz
+
+# Local IDE and DBeaver workspace settings.
+.idea/
+.vscode/
+.dbeaver/
