@@ -91,3 +91,33 @@ Las verificaciones de `sql/test_vistas_tp5.sql` (V1.1–V3.2) se ejecutaron manu
 ## Regla de histórico (Vista 3)
 
 La consulta de control V3.3 (`id_producto IN (4, 16)`) y la búsqueda general de detalles vigentes asociados a productos eliminados (`producto.eliminado = TRUE`) dieron **0 filas**. Por eso la regla histórica fue validada **por diseño y por equivalencia** (la vista no aplica el filtro de `producto.eliminado` y es idéntica a la consulta manual), pero **no pudo demostrarse visualmente** con registros existentes: la base no tiene casos de detalles vigentes ligados a productos eliminados.
+
+---
+
+# Parte C — Vista materializada
+
+## Vista y estructura
+
+- **Vista:** `mv_tp5_facturacion_categoria_mes` (definida en `sql/vista_materializada_tp5.sql`, spec en `specs/vista_materializada_tp5.md`).
+- Resume la **facturación por categoría y mes** a partir de `detalle_pedido`, `pedido`, `producto` y `categoria` (agregación `SUM(subtotal)` agrupada por categoría y `date_trunc('month', fecha)`).
+- Se crea con `WITH DATA` y tiene el índice único `uq_mv_tp5_facturacion_categoria_mes` sobre `(id_categoria, mes)`, requisito para futuros `REFRESH MATERIALIZED VIEW CONCURRENTLY`.
+
+## Mediciones
+
+La consulta directa equivalente (misma lógica que la vista), medida antes de crear la vista, tardó **1192.272 ms**. En el bloque posterior de pruebas:
+
+| Consulta | Tiempo |
+|---|---|
+| Directa equivalente | 706.310 ms |
+| Lectura de la vista materializada | 0.284 ms |
+
+Para la comparación más justa se usa **706.310 ms vs. 0.284 ms**: mejora aproximada de **2487x**. La diferencia entre las dos mediciones de la directa (1192.272 vs. 706.310 ms) muestra variación por caché/ejecución, por lo que **no se debe atribuir toda la variación a cambios de diseño**.
+
+Los **dos EXCEPT de equivalencia** (direcciones A y B, comparando las cuatro columnas) dieron **0 filas** en DBeaver sobre `foodstore_tp5`, confirmando que la vista materializada produce exactamente el mismo resultado que la consulta directa.
+
+## Política de actualización
+
+- Refrescar por lote (cierre mensual) o **diariamente para paneles** de control.
+- Usar `REFRESH MATERIALIZED VIEW CONCURRENTLY` cuando haya usuarios leyendo el reporte en paralelo (no bloquea lecturas).
+- **Nunca refrescar por cada INSERT**: el costo del refresh (re-ejecuta los cuatro joins sobre toda la tabla) supera el beneficio de mantener el dato en tiempo real.
+- La vista puede quedar **desactualizada entre refreshes** y es una instantánea: **no sirve para stock, pedidos activos ni operaciones transaccionales** (esas consultas deben ir a las tablas base).
