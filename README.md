@@ -101,3 +101,51 @@ Abre y ejecuta las consultas de la sección final de `queries.sql` para comproba
 * **Facturación mensual por categoría:** Agrupación y acumulados temporales.
 * **Ranking de usuarios:** Función de ventana analítica (`RANK() OVER (...)`).
 * **Detección de productos sin ventas:** Verificación con `LEFT JOIN ... WHERE id_detalle IS NULL`.
+
+---
+
+## 4. TP5 — Índices y vistas
+
+**Base de trabajo:** `foodstore_tp5`, creada como copia de `foodstore_tp3`.
+
+### Orden de ejecución (una sola vez)
+
+Ejecutar, en este orden, sobre `foodstore_tp5`:
+
+1. `sql/indices_tp5.sql` — tres índices parciales selectivos.
+2. `sql/views_tp5.sql` — tres vistas de reporte nuevas.
+3. `sql/vista_materializada_tp5.sql` — vista materializada de facturación + índice único.
+
+### Scripts de verificación
+
+- `sql/test_vistas_tp5.sql` — verificaciones de lectura de las vistas (EXCEPT de equivalencia).
+- `sql/test_vista_materializada_tp5.sql` — consultas de lectura, `EXPLAIN ANALYZE` y EXCEPT de equivalencia de la vista materializada.
+
+### Índices creados (selectivos, parciales)
+
+1. `idx_pedido_cancelado_fecha_vig` — `pedido (fecha DESC)` donde `eliminado = FALSE AND estado = 'CANCELADO'`.
+2. `idx_producto_no_disponible_nombre_vig` — `producto (nombre_producto ASC)` donde `eliminado = FALSE AND disponible = FALSE`.
+3. `idx_detalle_cantidad_excepcional_vig` — `detalle_pedido (cantidad DESC, id_detalle ASC)` donde `eliminado = FALSE AND cantidad >= 5`.
+
+### Vistas de reporte nuevas
+
+1. `v_tp5_productos_categoria` — catálogo de productos vigentes con categoría.
+2. `v_tp5_pedidos_usuario` — pedidos con identidad del usuario (sin `contrasena`, `celular` ni `rol`).
+3. `v_tp5_detalle_pedido_productos` — detalle de pedidos conservando productos históricos eliminados.
+
+### Vista materializada
+
+`mv_tp5_facturacion_categoria_mes` — resume la facturación por categoría y mes (consultas `detalle_pedido`/`pedido`/`producto`/`categoria`) para lecturas de reporte en lugar de repetir los joins y la agregación.
+
+**Refresco manual** (por lotes o diario, nunca por cada `INSERT`):
+
+```sql
+REFRESH MATERIALIZED VIEW CONCURRENTLY mv_tp5_facturacion_categoria_mes;
+```
+
+Requiere el índice único `uq_mv_tp5_facturacion_categoria_mes` (creado en `sql/vista_materializada_tp5.sql`) y no debe ejecutarse por cada `INSERT`.
+
+### Documentación de mediciones
+
+- `informe_mediciones_tp5.md` — resultados antes/después de índices, vistas y vista materializada, y las propuestas descartadas.
+- `duia_tp5.md` — registro de uso de herramientas (Kiro para specs, OpenCode para implementación y documentación) y validación manual en DBeaver.
