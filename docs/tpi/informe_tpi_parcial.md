@@ -13,7 +13,7 @@ Sistema de gestión de pedidos gastronómicos modelado íntegramente en base de 
 
 ## 2. Modelo ER y paso al modelo relacional
 
-- **Diagrama ER:** `docs/modelo_er_foodstore.jpeg` (diseño conceptual inicial, descrito en `docs/informe_tp1_proyecto_foodstore.pdf`).
+- **Diagrama ER:** `docs/modelo/modelo_er_foodstore.jpeg` (diseño conceptual inicial, descrito en `docs/modelo/informe_tp1_proyecto_foodstore.pdf`).
 - **Entidades:** `categoria`, `producto`, `usuario`, `pedido` y `detalle_pedido`.
 - **Relaciones 1:N** (implementadas en `sql/schema.sql`):
   - `categoria (1) → producto (N)`: FK `producto.id_categoria REFERENCES categoria(id_categoria)`.
@@ -24,7 +24,7 @@ Sistema de gestión de pedidos gastronómicos modelado íntegramente en base de 
 
 ## 3. Normalización
 
-Fuente: `specs/evidencia_normalizacion_tpi.md` y secciones "Normalización" de `docs/informe_tp1_proyecto_foodstore.pdf`.
+Fuente: `specs/tpi/evidencia_normalizacion_tpi.md` y secciones "Normalización" de `docs/modelo/informe_tp1_proyecto_foodstore.pdf`.
 
 ### Dependencias funcionales del esquema final (`sql/schema.sql`)
 
@@ -99,11 +99,11 @@ Fuente: `sql/queries.sql` (cinco epics HU-* y consultas analíticas A–E).
 - **Transiciones de estado del pedido** (`sql/restricciones.sql`, `trg_check_estado_transition`): `PENDIENTE → {CONFIRMADO, CANCELADO}`, `CONFIRMADO → {TERMINADO, CANCELADO}`; `TERMINADO` y `CANCELADO` son estados finales. Usa `WHEN (OLD.estado IS DISTINCT FROM NEW.estado)` para no dispararse en updates que no cambian el campo.
 - **Baja lógica de categorías** (`trg_check_categoria_baja_logica`): impide `categoria.eliminado = TRUE` si la categoría tiene productos vigentes; la reactivación siempre está permitida.
 - **Cálculos automáticos** (`sql/Objects.sql`): `trg_subtotal` completa `precio_unitario` y calcula `subtotal`; `trg_total_ins`/`trg_total_upd` recalculan `pedido.total` solo de los pedidos afectados (Transition Tables, PostgreSQL 10+). No se informan manualmente en los `INSERT` (`data.sql`, `carga_masiva_tp3.sql`).
-- **Pruebas:** `sql/test_restricciones.sql` con 10 casos para la Regla 1 (4 válidos, 6 inválidos) y 4 casos para la Regla 2, cada uno dentro de `BEGIN`/`ROLLBACK`; resultados reales en `duia_parte1.md`.
+- **Pruebas:** `sql/test_restricciones.sql` con 10 casos para la Regla 1 (4 válidos, 6 inválidos) y 4 casos para la Regla 2, cada uno dentro de `BEGIN`/`ROLLBACK`; resultados reales en `docs/tp2/duia_parte1.md`.
 
 ## 8. Transacciones y concurrencia
 
-Fuente: `sql/transacciones.sql` (y `informe_concurrencia.md` para el análisis de aislamiento).
+Fuente: `sql/transacciones.sql` (y `docs/tp2/informe_concurrencia.md` para el análisis de aislamiento).
 
 - **Escenario 1 — Atomicidad:** `sp_crear_pedido` con producto inexistente o cantidad 0 lanza excepción y **no deja** pedidos ni detalles (conteos antes/después iguales). El procedimiento no contiene `COMMIT` interno: el llamador decide el desenlace de la transacción envolvente.
 - **Escenario 2 — COMMIT vs ROLLBACK:** `UPDATE producto SET stock` dentro de `BEGIN`; con `COMMIT` persiste, con `ROLLBACK` se deshace.
@@ -113,7 +113,7 @@ Fuente: `sql/transacciones.sql` (y `informe_concurrencia.md` para el análisis d
 
 ## 9. Optimización, índices y vistas
 
-### Carga masiva (TP3 Parte 1, `informe_tp3.md`)
+### Carga masiva (TP3 Parte 1, `docs/tp3/informe_tp3.md`)
 
 `sql/carga_masiva_tp3.sql` cargó set-based sobre `foodstore_tp3`: 50.000 productos, 20.000 usuarios, 200.000 pedidos y 400.000 detalles (exactamente 2 por pedido), dentro de una transacción única con verificaciones V1–V7 (todas 0 filas en los checks que esperaban 0 filas), seguida de `ANALYZE` tras el `COMMIT`.
 
@@ -128,7 +128,7 @@ Fuente: `sql/transacciones.sql` (y `informe_concurrencia.md` para el análisis d
 | TP5: detalles con cantidad >= 5 | 182.874 ms | 1.498 ms | ~122x | `idx_detalle_cantidad_excepcional_vig` (TP5) |
 | Vista materializada: facturación mensual | 706.310 ms | 0.284 ms | ~2487x | `mv_tp5_facturacion_categoria_mes` (TP5) |
 
-Fuentes: `informe_tp3.md`, `informe_tp4.md`, `informe_mediciones_tp5.md`. Para la vista materializada se usó la **comparación más justa** (la misma consulta directa dentro del mismo bloque de pruebas: 706.310 vs. 0.284 ms); la variación entre mediciones de la directa (1192.272 vs. 706.310 ms) responde a caché/ejecución y no se atribuye a cambios de diseño.
+Fuentes: `docs/tp3/informe_tp3.md`, `docs/tp4/informe_tp4.md`, `docs/tp5/informe_mediciones_tp5.md`. Para la vista materializada se usó la **comparación más justa** (la misma consulta directa dentro del mismo bloque de pruebas: 706.310 vs. 0.284 ms); la variación entre mediciones de la directa (1192.272 vs. 706.310 ms) responde a caché/ejecución y no se atribuye a cambios de diseño.
 
 ### Índices descartados por evidencia real o falta de selectividad
 
@@ -151,19 +151,19 @@ Todo lo anterior fue probado manualmente en DBeaver con evidencia real:
 
 | Área | Pruebas | Resultado documentado |
 |---|---|---|
-| Restricciones | `test_restricciones.sql`, 14 casos | Real en `duia_parte1.md` (excepciones esperadas confirmadas) |
-| Carga masiva | V1–V7 | 0 filas en los checks, conteos correctos (`informe_tp3.md`) |
-| Equivalencias | `EXCEPT` ×4 (TP3 P4) y ×4 (TP4 P3) | 0 filas en cada dirección (`informe_tp3.md`, `informe_tp4.md`) |
+| Restricciones | `test_restricciones.sql`, 14 casos | Real en `docs/tp2/duia_parte1.md` (excepciones esperadas confirmadas) |
+| Carga masiva | V1–V7 | 0 filas en los checks, conteos correctos (`docs/tp3/informe_tp3.md`) |
+| Equivalencias | `EXCEPT` ×4 (TP3 P4) y ×4 (TP4 P3) | 0 filas en cada dirección (`docs/tp3/informe_tp3.md`, `docs/tp4/informe_tp4.md`) |
 | Vistas TP5 | `test_vistas_tp5.sql` (V1.1–V3.2) | Seis EXCEPT 0 filas; control V3.3 informativo (`test_vistas_tp5.sql`) |
-| Vista materializada | `test_vista_materializada_tp5.sql` | Excepciones A/B 0 filas; lectura 0.284 ms (`informe_mediciones_tp5.md`) |
-| Concurrencia | `transacciones.sql` escenarios 1–4 (3 y 4 con dos sesiones) | `informe_concurrencia.md`, `informe_tp4.md` |
+| Vista materializada | `test_vista_materializada_tp5.sql` | Excepciones A/B 0 filas; lectura 0.284 ms (`docs/tp5/informe_mediciones_tp5.md`) |
+| Concurrencia | `transacciones.sql` escenarios 1–4 (3 y 4 con dos sesiones) | `docs/tp2/informe_concurrencia.md`, `docs/tp4/informe_tp4.md` |
 
 ## 11. Uso de IA
 
-- **Kiro — especificaciones:** redactó las specs que guiaron la implementación y la auditoría del TPI: `spec_restricciones.md`, `spec_consultas_tp4.md`, `specs/plan_indexado_tp5.md`, `specs/vistas_tp5.md`, `specs/vista_materializada_tp5.md`, `specs/auditoria_tpi_parcial.md` y `specs/evidencia_normalizacion_tpi.md`.
-- **OpenCode — propuestas y archivos:** generó los scripts SQL de cada TP (`restricciones.sql`, `carga_masiva_tp3.sql`, `indices_*.sql`, `consultas_parte*.sql`, `views_tp5.sql`, `vista_materializada_tp5.sql`, `test_*.sql`) y los informes integradores (`informe_tp3.md`, `informe_tp4.md`, `informe_mediciones_tp5.md`, este informe y DUIAs).
-- **Codex — guía, revisión y coordinación:** revisó trazabilidad de archivos y cifras, coordinó la corrección de la evolución ER → `schema.sql` (ver `duia_tpi_parcial.md`) y veló por la coherencia entre secciones.
-- **Aclaración de método:** ninguna decisión se aceptó por propuesta de IA sin prueba. Las aceptaciones y los descartes se validaron con **pruebas manuales en DBeaver** (mensajes de excepción reales, `EXPLAIN ANALYZE` con Execution Time, verificaciones `EXCEPT` en 0 filas). El detalle punto a punto de qué se aceptó y qué se corrigió/descartó, y por qué, está en las DUIA específicas: `duia_parte1.md`, `duia_tp3.md`, `duia_tp4.md`, `duia_tp5.md` y `duia_tpi_parcial.md`.
+- **Kiro — especificaciones:** redactó las specs que guiaron la implementación y la auditoría del TPI: `specs/tp2/spec_restricciones.md`, `specs/tp4/spec_consultas_tp4.md`, `specs/tp5/plan_indexado_tp5.md`, `specs/tp5/vistas_tp5.md`, `specs/tp5/vista_materializada_tp5.md`, `specs/tpi/auditoria_tpi_parcial.md` y `specs/tpi/evidencia_normalizacion_tpi.md`.
+- **OpenCode — propuestas y archivos:** generó los scripts SQL de cada TP (`restricciones.sql`, `carga_masiva_tp3.sql`, `indices_*.sql`, `consultas_parte*.sql`, `views_tp5.sql`, `vista_materializada_tp5.sql`, `test_*.sql`) y los informes integradores (`docs/tp3/informe_tp3.md`, `docs/tp4/informe_tp4.md`, `docs/tp5/informe_mediciones_tp5.md`, este informe y DUIAs).
+- **Codex — guía, revisión y coordinación:** revisó trazabilidad de archivos y cifras, coordinó la corrección de la evolución ER → `schema.sql` (ver `docs/tpi/duia_tpi_parcial.md`) y veló por la coherencia entre secciones.
+- **Aclaración de método:** ninguna decisión se aceptó por propuesta de IA sin prueba. Las aceptaciones y los descartes se validaron con **pruebas manuales en DBeaver** (mensajes de excepción reales, `EXPLAIN ANALYZE` con Execution Time, verificaciones `EXCEPT` en 0 filas). El detalle punto a punto de qué se aceptó y qué se corrigió/descartó, y por qué, está en las DUIA específicas: `docs/tp2/duia_parte1.md`, `docs/tp3/duia_tp3.md`, `docs/tp4/duia_tp4.md`, `docs/tp5/duia_tp5.md` y `docs/tpi/duia_tpi_parcial.md`.
 
 ## 12. Conclusión
 

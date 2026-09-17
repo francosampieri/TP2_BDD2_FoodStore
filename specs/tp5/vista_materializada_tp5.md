@@ -291,7 +291,7 @@ Usar `REFRESH MATERIALIZED VIEW` (sin `CONCURRENTLY`) solo en:
 
 La consulta de facturación por categoría y mes agrega **todas** las filas
 vigentes de `detalle_pedido` sin predicado selectivo. Como se documentó en
-`specs/plan_indexado_tp5.md` y se verificó en `informe_mediciones_tp5.md`,
+`specs/tp5/plan_indexado_tp5.md` y se verificó en `docs/tp5/informe_mediciones_tp5.md`,
 este tipo de consulta no puede beneficiarse de índices B-tree: el planner
 necesita leer la tabla completa independientemente del índice disponible.
 El costo medido en TP4 (946.611 ms, con sort de disco de 4.5–4.8 MB)
@@ -330,3 +330,4 @@ Por esta razón:
 La vista materializada es exclusivamente una herramienta de lectura para
 reportes analíticos de datos históricos agregados, complementaria al
 modelo transaccional, no sustituta de él.
+

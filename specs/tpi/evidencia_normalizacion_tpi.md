@@ -11,8 +11,8 @@
 
 | Archivo | Contenido relevante |
 |---|---|
-| `docs/informe_tp1_proyecto_foodstore.pdf` | Secciones "Modelo Relacional", "Normalización y Descomposición Relacional" y "Decisiones de Diseño" |
-| `docs/modelo_er_foodstore.jpeg` | Diagrama ER con entidades, atributos y cardinalidades del diseño conceptual inicial |
+| `docs/modelo/informe_tp1_proyecto_foodstore.pdf` | Secciones "Modelo Relacional", "Normalización y Descomposición Relacional" y "Decisiones de Diseño" |
+| `docs/modelo/modelo_er_foodstore.jpeg` | Diagrama ER con entidades, atributos y cardinalidades del diseño conceptual inicial |
 | `sql/schema.sql` | Implementación final: tipos ENUM, tablas, CHECK, UNIQUE, FK, índices base |
 | `sql/Objects.sql` | Triggers que justifican las columnas derivadas (`subtotal`, `total`) |
 
@@ -265,7 +265,7 @@ patrón reconocido en sistemas RDBMS de producción.
 
 ### 5.1 Principio general
 
-`docs/modelo_er_foodstore.jpeg` representa el **diseño conceptual inicial** del proyecto:
+`docs/modelo/modelo_er_foodstore.jpeg` representa el **diseño conceptual inicial** del proyecto:
 entidades, atributos y cardinalidades. `sql/schema.sql` es la **implementación final**,
 que concreta ese diseño con tipos precisos, restricciones de valor y reglas de integridad
 referencial.
@@ -341,7 +341,7 @@ se formalizaron en `schema.sql`:
 
 ---
 
-## 6. Esquema para `informe_tpi_parcial.md`
+## 6. Esquema para `docs/tpi/informe_tpi_parcial.md`
 
 El siguiente esquema de secciones cubre los nueve criterios evaluativos del TPI. Cada
 sección indica qué archivos del repositorio la respaldan y qué elementos concretos deben
@@ -365,7 +365,7 @@ citarse.
 **Criterios cubiertos:** 1 (Modelo ER), 2 (paso ER → relacional).
 
 **Citar:**
-- `docs/modelo_er_foodstore.jpeg` — diagrama con las cinco entidades y sus relaciones.
+- `docs/modelo/modelo_er_foodstore.jpeg` — diagrama con las cinco entidades y sus relaciones.
 - Tabla de entidades, atributos y cardinalidades.
 - Explicación de la relación M:N `pedido–producto` resuelta por `detalle_pedido`.
 - Nota sobre evolución: el ER es el diseño conceptual; `schema.sql` es la implementación
@@ -379,7 +379,7 @@ citarse.
 **Criterio cubierto:** 3 (Normalización 3FN/BCNF y dependencias funcionales).
 
 **Citar:**
-- `docs/informe_tp1_proyecto_foodstore.pdf` — secciones "Modelo Relacional" y
+- `docs/modelo/informe_tp1_proyecto_foodstore.pdf` — secciones "Modelo Relacional" y
   "Normalización y Descomposición Relacional".
 - Lista completa de dependencias funcionales por tabla (sección 1 de este documento).
 - Justificación de 1FN, 2FN, 3FN y BCNF (sección 2 de este documento).
@@ -473,7 +473,7 @@ citarse.
 - `sql/restricciones.sql` — triggers de integridad:
   - `trg_check_estado_transition`: máquina de estados del pedido.
   - `trg_check_categoria_baja_logica`: impide dar de baja categorías con productos vigentes.
-- `sql/test_restricciones.sql` y `duia_parte1.md` — 14 casos de prueba, todos con resultado
+- `sql/test_restricciones.sql` y `docs/tp2/duia_parte1.md` — 14 casos de prueba, todos con resultado
   real documentado.
 - Tabla de transiciones válidas del pedido:
 
@@ -498,7 +498,7 @@ CANCELADO  → cualquier estado  ✗ (estado final)
   2. `BEGIN/COMMIT` vs. `BEGIN/ROLLBACK` sobre stock.
   3. Lectura no repetible: `READ COMMITTED` vs. `SERIALIZABLE` (requiere 2 sesiones).
   4. Sobreventa sin control (demostración del problema) vs. solución con `FOR UPDATE`.
-- `informe_concurrencia.md` — análisis de niveles de aislamiento.
+- `docs/tp2/informe_concurrencia.md` — análisis de niveles de aislamiento.
 - `sql/carga_masiva_tp3.sql` — `BEGIN` explícito sin COMMIT automático; el usuario decide
   manualmente según el resultado de las verificaciones V1–V7.
 - Aclarar que `sp_crear_pedido` no contiene `COMMIT` explícito: el llamador es responsable
@@ -518,8 +518,8 @@ CANCELADO  → cualquier estado  ✗ (estado final)
   - `v_tp5_detalle_pedido_productos` no filtra `producto.eliminado` por diseño (histórico).
 - Índices parciales `WHERE eliminado = FALSE` como patrón correcto.
 - Propuesta descartada `ON pedido (eliminado)`: baja cardinalidad, nunca elegido por planner.
-- **Resultados de optimización antes/después** (tabla consolidada — fuentes: `informe_tp3.md`,
-  `informe_tp4.md`, `informe_mediciones_tp5.md`):
+- **Resultados de optimización antes/después** (tabla consolidada — fuentes: `docs/tp3/informe_tp3.md`,
+  `docs/tp4/informe_tp4.md`, `docs/tp5/informe_mediciones_tp5.md`):
 
 | Consulta | Execution Time antes | Execution Time después | Mejora |
 |---|---|---|---|
@@ -536,7 +536,7 @@ CANCELADO  → cualquier estado  ✗ (estado final)
 
 **No es un criterio de normalización, pero es requerido por el TPI.**
 
-**Citar:** `duia_parte1.md`, `duia_tp3.md`, `duia_tp4.md`, `duia_tp5.md`.
+**Citar:** `docs/tp2/duia_parte1.md`, `docs/tp3/duia_tp3.md`, `docs/tp4/duia_tp4.md`, `docs/tp5/duia_tp5.md`.
 
 **Elementos a incluir por cada DUIA:**
 - Herramienta utilizada (OpenCode / Kiro) y para qué tarea concreta.
@@ -560,3 +560,4 @@ CANCELADO  → cualquier estado  ✗ (estado final)
   no son reproducibles exactamente en otra máquina.
 - Posibles extensiones: particionado por fecha en `pedido` y `detalle_pedido`,
   política de REFRESH programada para la vista materializada.
+

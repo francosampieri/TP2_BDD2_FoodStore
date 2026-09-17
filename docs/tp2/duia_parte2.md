@@ -39,4 +39,5 @@ Las explicaciones se verificaron en PostgreSQL 17 con dos sesiones de DBeaver so
 
 ## Archivo relacionado
 
-El registro detallado de comandos, salidas y conclusiones está en `informe_concurrencia.md`.
+El registro detallado de comandos, salidas y conclusiones está en `docs/tp2/informe_concurrencia.md`.
+

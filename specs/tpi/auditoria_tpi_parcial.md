@@ -28,9 +28,9 @@
 **Estado: Cubierto**
 
 ### Evidencia disponible
-- `docs/modelo_er_foodstore.jpeg` — diagrama ER original con entidades,
+- `docs/modelo/modelo_er_foodstore.jpeg` — diagrama ER original con entidades,
   atributos y cardinalidades.
-- `docs/informe_tp1_proyecto_foodstore.pdf` — informe TP1 que describe
+- `docs/modelo/informe_tp1_proyecto_foodstore.pdf` — informe TP1 que describe
   el diseño inicial del modelo.
 
 ### Qué debe explicarse o citarse en el informe TPI
@@ -59,7 +59,7 @@ Ninguno. El diagrama y el informe TP1 cubren el criterio.
 ### Evidencia disponible
 - `sql/schema.sql` — implementación final de las cinco tablas con
   sus claves primarias, foráneas y restricciones.
-- `docs/informe_tp1_proyecto_foodstore.pdf` — documentación del paso
+- `docs/modelo/informe_tp1_proyecto_foodstore.pdf` — documentación del paso
   de ER a relacional.
 
 ### Qué debe explicarse o citarse en el informe TPI
@@ -89,7 +89,7 @@ Ninguno.
 **Estado: Parcial**
 
 ### Evidencia disponible
-- `docs/informe_tp1_proyecto_foodstore.pdf` — contiene análisis de
+- `docs/modelo/informe_tp1_proyecto_foodstore.pdf` — contiene análisis de
   normalización inicial.
 - `sql/schema.sql` — el esquema implementado evidencia las decisiones
   de normalización (no hay columnas calculadas redundantes excepto las
@@ -287,7 +287,7 @@ Ninguno.
 
 **Pruebas:** `sql/test_restricciones.sql` — 10 casos para Regla 1
 (4 válidos, 6 inválidos) y 4 casos para Regla 2; todos documentados
-con resultado real en `duia_parte1.md`.
+con resultado real en `docs/tp2/duia_parte1.md`.
 
 ### Qué debe explicarse o citarse en el informe TPI
 - Tabla de restricciones con tipo (CHECK, UNIQUE, trigger), tabla,
@@ -328,7 +328,7 @@ Ninguno.
   estado sucio.
 - `sql/Objects.sql` — `sp_crear_pedido` es transaccional por diseño:
   `RAISE EXCEPTION` aborta la transacción completa (pedido + detalles).
-- `informe_concurrencia.md` — informe separado sobre concurrencia.
+- `docs/tp2/informe_concurrencia.md` — informe separado sobre concurrencia.
 
 ### Qué debe explicarse o citarse en el informe TPI
 - Diagrama o tabla de los cuatro escenarios de `transacciones.sql`
@@ -342,7 +342,7 @@ Ninguno.
 - Distinguir `READ COMMITTED` (lectura no repetible posible) vs.
   `SERIALIZABLE` (lecturas estables dentro de la transacción) con el
   ejemplo del Escenario 3.
-- Mencionar que `informe_concurrencia.md` profundiza en el análisis
+- Mencionar que `docs/tp2/informe_concurrencia.md` profundiza en el análisis
   de los niveles de aislamiento.
 
 ### Pendiente documental
@@ -375,7 +375,7 @@ Ninguno.
   como condición parcial en lugar de indexar el booleano directamente.
 - Se documentó y descartó explícitamente el índice simple
   `ON pedido (eliminado)` por baja cardinalidad
-  (en `specs/plan_indexado_tp5.md` e `informe_mediciones_tp5.md`).
+  (en `specs/tp5/plan_indexado_tp5.md` e `docs/tp5/informe_mediciones_tp5.md`).
 - La condición parcial reduce el tamaño del índice, excluye filas
   eliminadas del árbol B-tree y habilita `REFRESH CONCURRENTLY` en la
   vista materializada con un índice único sobre los datos vigentes.
@@ -425,7 +425,7 @@ ordenados de mayor a menor impacto para la entrega:
    - Tecnología: PostgreSQL 17, sin capa de aplicación
 
 2. Modelo ER y diseño conceptual
-   - Diagrama ER (referencia a docs/modelo_er_foodstore.jpeg)
+   - Diagrama ER (referencia a docs/modelo/modelo_er_foodstore.jpeg)
    - Entidades, atributos y cardinalidades
    - Evolución del diseño (columnas added post-ER: created_at, imagen)
 
@@ -481,8 +481,8 @@ ordenados de mayor a menor impacto para la entrega:
 
 ### Ya presentes en el repositorio
 
-- [x] `docs/modelo_er_foodstore.jpeg`
-- [x] `docs/informe_tp1_proyecto_foodstore.pdf`
+- [x] `docs/modelo/modelo_er_foodstore.jpeg`
+- [x] `docs/modelo/informe_tp1_proyecto_foodstore.pdf`
 - [x] `sql/schema.sql`
 - [x] `sql/Objects.sql`
 - [x] `sql/data.sql`
@@ -502,19 +502,19 @@ ordenados de mayor a menor impacto para la entrega:
 - [x] `sql/test_vistas_tp5.sql`
 - [x] `sql/vista_materializada_tp5.sql`
 - [x] `sql/test_vista_materializada_tp5.sql`
-- [x] `informe_tp3.md`
-- [x] `informe_tp4.md`
-- [x] `informe_mediciones_tp5.md`
-- [x] `informe_concurrencia.md`
-- [x] `duia_parte1.md`
-- [x] `duia_tp3.md`
-- [x] `duia_tp4.md`
-- [x] `duia_tp5.md`
-- [x] `spec_restricciones.md`
-- [x] `spec_consultas_tp4.md`
-- [x] `specs/plan_indexado_tp5.md`
-- [x] `specs/vistas_tp5.md`
-- [x] `specs/vista_materializada_tp5.md`
+- [x] `docs/tp3/informe_tp3.md`
+- [x] `docs/tp4/informe_tp4.md`
+- [x] `docs/tp5/informe_mediciones_tp5.md`
+- [x] `docs/tp2/informe_concurrencia.md`
+- [x] `docs/tp2/duia_parte1.md`
+- [x] `docs/tp3/duia_tp3.md`
+- [x] `docs/tp4/duia_tp4.md`
+- [x] `docs/tp5/duia_tp5.md`
+- [x] `specs/tp2/spec_restricciones.md`
+- [x] `specs/tp4/spec_consultas_tp4.md`
+- [x] `specs/tp5/plan_indexado_tp5.md`
+- [x] `specs/tp5/vistas_tp5.md`
+- [x] `specs/tp5/vista_materializada_tp5.md`
 - [x] `README.md`
 
 ### Faltantes o a crear para la entrega final
@@ -531,3 +531,4 @@ ordenados de mayor a menor impacto para la entrega:
 - [ ] Backup de `foodstore_tp2` (pre-restricciones): ya en `backups/`.
 - [ ] Backup de `foodstore_tp5` (estado final con todos los objetos TP5):
   no está aún en `backups/`; recomendado antes de la entrega.
+

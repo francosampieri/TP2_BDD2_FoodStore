@@ -14,17 +14,17 @@
 
 ## Spec y prompt utilizados
 
-La decisión de negocio se documentó primero en `spec_restricciones.md`.
+La decisión de negocio se documentó primero en `specs/tp2/spec_restricciones.md`.
 
 Prompt principal de implementación enviado a OpenCode:
 
 > Plan aprobado. Implementalo con estas condiciones finales:
 >
-> - Crear únicamente `sql/restricciones.sql`, `sql/test_restricciones.sql` y `duia_parte1.md`.
+> - Crear únicamente `sql/restricciones.sql`, `sql/test_restricciones.sql` y `docs/tp2/duia_parte1.md`.
 > - No modificar `schema.sql`, `Objects.sql`, `data.sql`, `queries.sql` ni `transacciones.sql`.
 > - En las pruebas que generen una excepción esperada, indicar que `ROLLBACK` debe ejecutarse en la misma conexión/sesión de DBeaver; no sugerir una pestaña nueva.
 > - Mantener cada `WITH cat_disponible` junto al `UPDATE` que lo usa, dentro de la misma sentencia.
-> - `duia_parte1.md` debe incluir el campo "Herramienta: OpenCode" y todos los campos exigidos por la consigna.
+> - `docs/tp2/duia_parte1.md` debe incluir el campo "Herramienta: OpenCode" y todos los campos exigidos por la consigna.
 > - No ejecutar ningún script sobre la base de datos.
 > - No hacer commits.
 >
@@ -36,7 +36,7 @@ Prompt principal de implementación enviado a OpenCode:
 
 - `sql/restricciones.sql`: dos funciones PL/pgSQL y dos triggers para las reglas definidas.
 - `sql/test_restricciones.sql`: casos válidos e inválidos, aislados con `BEGIN` y `ROLLBACK`.
-- `duia_parte1.md`: plantilla inicial de esta declaración.
+- `docs/tp2/duia_parte1.md`: plantilla inicial de esta declaración.
 
 ---
 
@@ -114,6 +114,7 @@ Las excepciones esperadas devuelven SQLSTATE `P0001` porque fueron lanzadas expl
 ## Revisión final y publicación
 
 1. `git diff` — revisión línea por línea de los archivos creados/modificados.
-2. `git add` — agregar `spec_restricciones.md`, `sql/restricciones.sql`, `sql/test_restricciones.sql` y `duia_parte1.md`.
+2. `git add` — agregar `specs/tp2/spec_restricciones.md`, `sql/restricciones.sql`, `sql/test_restricciones.sql` y `docs/tp2/duia_parte1.md`.
 3. `git commit` — mensaje descriptivo.
 4. `git push` — subir al repositorio remoto.
+

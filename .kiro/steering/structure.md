@@ -6,14 +6,25 @@ TPN1_BDD_2_FoodStore/
 │   ├── schema.sql        # ENUMs, tables, indexes — run first
 │   ├── Objects.sql       # Views, functions, triggers, stored procedure — run second
 │   ├── data.sql          # Seed/test data — run third
-│   └── queries.sql       # Use-case queries (epics) and analytical reports —
-│   └── transacciones.sql # Transaction and concurrency examples; run selectively 
-run fourth
+│   ├── queries.sql       # Use-case queries and analytical reports — run selectively
+│   └── transacciones.sql # Transaction and concurrency examples — run selectively
+├── docs/
+│   ├── modelo/           # ER model and TP1 source documentation
+│   ├── tp2/              # Integrity and concurrency reports/DUIA
+│   ├── tp3/              # Load and optimization reports/DUIA
+│   ├── tp4/              # Execution-plan reports/DUIA
+│   ├── tp5/              # Index, view and materialized-view reports/DUIA
+│   └── tpi/              # Partial integrative-delivery report and DUIA
+├── specs/
+│   ├── tp2/              # Integrity-rule specification
+│   ├── tp4/              # Analytical-query specification
+│   ├── tp5/              # Index and view specifications
+│   └── tpi/              # TPI audit and normalization evidence
 ├── backups/              # Local backups; ignored by Git
 ├── .kiro/
 │   └── steering/         # AI assistant context files
-├── README.md             # Setup instructions and test scenarios
-└── _Proyecto FoodStore.docx  # Original project specification document
+├── README.md             # Setup, test scenarios and repository map
+└── AGENTS.md             # Project guidance for AI assistants
 ```
 
 ## SQL Layer Organization

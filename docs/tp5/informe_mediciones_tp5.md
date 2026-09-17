@@ -74,7 +74,7 @@ Mismo `INSERT` temporal de **300 detalles**, ejecutado dentro de `BEGIN`/`ROLLBA
 
 # Parte B — Vistas de reporte
 
-Tres vistas nuevas creadas en `sql/views_tp5.sql`, especificadas en `specs/vistas_tp5.md`. Las vistas existentes de `Objects.sql` no se modificaron ni reemplazaron.
+Tres vistas nuevas creadas en `sql/views_tp5.sql`, especificadas en `specs/tp5/vistas_tp5.md`. Las vistas existentes de `Objects.sql` no se modificaron ni reemplazaron.
 
 ## Vistas creadas y reglas principales
 
@@ -98,7 +98,7 @@ La consulta de control V3.3 (`id_producto IN (4, 16)`) y la búsqueda general de
 
 ## Vista y estructura
 
-- **Vista:** `mv_tp5_facturacion_categoria_mes` (definida en `sql/vista_materializada_tp5.sql`, spec en `specs/vista_materializada_tp5.md`).
+- **Vista:** `mv_tp5_facturacion_categoria_mes` (definida en `sql/vista_materializada_tp5.sql`, spec en `specs/tp5/vista_materializada_tp5.md`).
 - Resume la **facturación por categoría y mes** a partir de `detalle_pedido`, `pedido`, `producto` y `categoria` (agregación `SUM(subtotal)` agrupada por categoría y `date_trunc('month', fecha)`).
 - Se crea con `WITH DATA` y tiene el índice único `uq_mv_tp5_facturacion_categoria_mes` sobre `(id_categoria, mes)`, requisito para futuros `REFRESH MATERIALIZED VIEW CONCURRENTLY`.
 

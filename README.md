@@ -147,5 +147,29 @@ Requiere el índice único `uq_mv_tp5_facturacion_categoria_mes` (creado en `sql
 
 ### Documentación de mediciones
 
-- `informe_mediciones_tp5.md` — resultados antes/después de índices, vistas y vista materializada, y las propuestas descartadas.
-- `duia_tp5.md` — registro de uso de herramientas (Kiro para specs, OpenCode para implementación y documentación) y validación manual en DBeaver.
+- `docs/tp5/informe_mediciones_tp5.md` — resultados antes/después de índices, vistas y vista materializada, y las propuestas descartadas.
+- `docs/tp5/duia_tp5.md` — registro de uso de herramientas (Kiro para specs, OpenCode para implementación y documentación) y validación manual en DBeaver.
+
+---
+
+## 5. Organización del repositorio
+
+Los scripts ejecutables se conservan en `sql/`. La documentación y las especificaciones se separan por entrega para que no interfieran con el orden de ejecución de la base.
+
+```text
+docs/
+├── modelo/  — modelo ER e informe base del TP1
+├── tp2/     — informes, protocolo y DUIA de integridad/concurrencia
+├── tp3/     — informe y DUIA de carga masiva y optimización
+├── tp4/     — informe y DUIA de análisis de planes
+├── tp5/     — informe y DUIA de índices, vistas y vista materializada
+└── tpi/     — informe y DUIA de la primera entrega parcial integradora
+
+specs/
+├── tp2/     — especificación de restricciones
+├── tp4/     — especificación de consultas analíticas
+├── tp5/     — especificaciones de índices y vistas
+└── tpi/     — auditoría y evidencia de normalización del integrador
+```
+
+Los entregables en PDF se ubican junto con la documentación de su respectivo TP. El informe técnico de la primera entrega integradora está en `docs/tpi/TPI_FoodStore_Primera_Entrega_Parcial.pdf`.

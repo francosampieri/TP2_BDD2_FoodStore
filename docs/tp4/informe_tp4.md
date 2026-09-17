@@ -63,7 +63,7 @@ En el `Parallel Hash Join` sobre `dp.id_pedido = ped.id_pedido`, **no existe un 
 
 ## Parte 3 — Equivalencias y verificaciones (Spec A y Spec B)
 
-- `spec_consultas_tp4.md` fue creado por Kiro.
+- `specs/tp4/spec_consultas_tp4.md` fue creado por Kiro.
 - `sql/consultas_parte3_tp4.sql` fue generado por OpenCode.
 
 ### Spec A — Ranking de productos por facturación dentro de su categoría (RANK)
