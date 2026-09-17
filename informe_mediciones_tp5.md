@@ -1,6 +1,10 @@
-# Informe de Mediciones — TP5 FoodStore (Parte A)
+# Informe de Mediciones — TP5 FoodStore
 
 Base de trabajo: `foodstore_tp3` y `foodstore_tp5` (PostgreSQL 17). Medición manual en DBeaver. Los tiempos de lectura provienen de `EXPLAIN ANALYZE` (se toma el `Execution Time`).
+
+---
+
+# Parte A — Indexación
 
 ---
 
@@ -65,3 +69,25 @@ Mismo `INSERT` temporal de **300 detalles**, ejecutado dentro de `BEGIN`/`ROLLBA
 1. **Índice simple sobre `pedido (eliminado)`** — baja cardinalidad: `eliminado` es booleano y casi todos los pedidos están vigentes, por lo que no aporta selectividad.
 2. **Índices para agregaciones globales sin filtro selectivo** — las consultas que agregan todas las filas vigentes (p. ej., facturación por categoría/mes) necesitan recorrer las tablas completas; ningún índice B-tree evita esa lectura.
 3. **Índice general sobre `pedido (total)` para "total mayor al promedio"** — devolvía 88.369 pedidos de 200.021, por lo que no era suficientemente selectivo y no justificaba su costo de mantenimiento.
+
+---
+
+# Parte B — Vistas de reporte
+
+Tres vistas nuevas creadas en `sql/views_tp5.sql`, especificadas en `specs/vistas_tp5.md`. Las vistas existentes de `Objects.sql` no se modificaron ni reemplazaron.
+
+## Vistas creadas y reglas principales
+
+| Vista | Objetivo | Reglas principales |
+|---|---|---|
+| `v_tp5_productos_categoria` | Catálogo completo para reportes de inventario por categoría | Filtra `producto.eliminado = FALSE` y `categoria.eliminado = FALSE`; expone precio, stock, disponibilidad y categoría desnormalizada |
+| `v_tp5_pedidos_usuario` | Reporte administrativo y auditoría con identidad completa del usuario | Filtra `pedido.eliminado = FALSE` y `usuario.eliminado = FALSE`; no expone `contrasena`, `celular` ni `rol` |
+| `v_tp5_detalle_pedido_productos` | Historial de ventas con nombre del producto | Filtra solo `detalle_pedido.eliminado = FALSE`; conserva el nombre de productos históricos aunque `producto.eliminado = TRUE` |
+
+## Verificación de equivalencia
+
+Las verificaciones de `sql/test_vistas_tp5.sql` (V1.1–V3.2) se ejecutaron manualmente en DBeaver sobre `foodstore_tp5`: las **seis verificaciones EXCEPT dieron 0 filas**, confirmando que cada vista es idéntica a su consulta manual equivalente en todas las columnas expuestas.
+
+## Regla de histórico (Vista 3)
+
+La consulta de control V3.3 (`id_producto IN (4, 16)`) y la búsqueda general de detalles vigentes asociados a productos eliminados (`producto.eliminado = TRUE`) dieron **0 filas**. Por eso la regla histórica fue validada **por diseño y por equivalencia** (la vista no aplica el filtro de `producto.eliminado` y es idéntica a la consulta manual), pero **no pudo demostrarse visualmente** con registros existentes: la base no tiene casos de detalles vigentes ligados a productos eliminados.
