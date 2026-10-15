@@ -1,0 +1,76 @@
+================================================================
+RESUMEN NORMALIZADO Y ANONIMIZADO DE EVENTOS DE LOG — TP U5, Parte B
+================================================================
+AVISO: este archivo es un RESUMEN NORMALIZADO, NO una transcripción
+literal del log. No reproduce el formato crudo del archivo; IP, puertos,
+rutas locales y datos personales fueron omitidos. El log bruto NO forma
+parte del repositorio.
+
+Entorno de la prueba
+--------------------
+- Motor: PostgreSQL 17
+- Base: foodstore_tp_u5
+- Zona horaria de los eventos: -03
+- Archivo de log del collector (nombre): postgresql-2026-10-14_054750.log
+  (ubicado en el log_directory del servidor; ruta local omitida)
+- PID de la sesión de pruebas SQL: 33484
+
+Configuración
+-------------
+- Activación (temporal, para la prueba):
+    ALTER SYSTEM SET ...   y   ALTER DATABASE foodstore_tp_u5 SET ...
+  Valores usados: log_connections = on, log_disconnections = on,
+  log_statement = mod.
+- Formato de línea durante la prueba:
+    log_line_prefix = '%m [%p] %u@%d %r '
+- Para observar un SELECT puntual se usó SET LOCAL log_statement = 'all'
+  dentro de una transacción, que después se revirtió (all no quedó activo).
+- Restauración al finalizar:
+    ALTER SYSTEM RESET ...   y   ALTER DATABASE foodstore_tp_u5 RESET ...
+  seguido de recarga de configuración. Valores finales:
+    log_connections    = off
+    log_disconnections = off
+    log_statement      = none
+    log_line_prefix    = '%t '
+
+Criterios de anonimización
+--------------------------
+- Direcciones IP, puertos y rutas locales: omitidos.
+- Datos personales (nombres, correos, usuarios reales): omitidos.
+- Contraseñas: no se incluyen (ver más abajo).
+- Las marcas de tiempo se conservan (dato aportado); el resto de la línea
+  de log se normaliza, no se transcribe tal cual.
+
+Eventos confirmados — sesión SQL PID 33484 (14/10/2026, -03)
+------------------------------------------------------------
+Contenido normalizado. En el log de DBeaver estas operaciones aparecen
+como entradas del tipo "ejecutar <unnamed>" (protocolo extendido).
+
+  23:23:47.122   INSERT categoria   (nombre_categoria = 'TP_U5_AUD_categoria_tmp')
+  23:23:52.978   UPDATE categoria   (mismo nombre; se actualiza la descripción)
+  23:24:18.016   SELECT controlado  (catálogo; capturado con SET LOCAL log_statement = 'all')
+  23:24:29.317   ROLLBACK           (cierre de la transacción del SELECT con SET LOCAL)
+
+Nota: hubo una pareja previa de INSERT/UPDATE; la prueba se repitió. No se
+registra aquí la causa de la repetición.
+
+Aclaración: el ROLLBACK de las 23:24:29 pertenece al bloque del SELECT con
+SET LOCAL; NO es prueba de que se haya revertido el INSERT/UPDATE. La no
+persistencia del INSERT/UPDATE se acredita aparte, con el conteo = 0
+(ver "Comprobaciones hechas FUERA del log").
+
+Evento confirmado — intento de conexión fallido
+-----------------------------------------------
+  23:36:52.694   FATAL: password authentication failed for user "app_web"
+                 origen: host = [IP omitida]   puerto = [puerto omitido]
+
+  El intento se hizo desde DBeaver con una contraseña FICTICIA (no real),
+  que NO se comparte ni se incluye en este resumen. El rol app_web tenía
+  PASSWORD NULL, por lo que la autenticación por contraseña falló.
+
+Comprobaciones hechas FUERA del log (no son líneas de log)
+----------------------------------------------------------
+- SELECT count(*) FROM categoria WHERE nombre_categoria LIKE 'TP_U5_AUD_%';
+  devolvió una fila cuyo valor era 0 → conteo = 0. Confirma que la categoría
+  temporal no persistió.
+================================================================
