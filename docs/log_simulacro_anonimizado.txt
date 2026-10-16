@@ -1,0 +1,26 @@
+EXTRACTO ANONIMIZADO DEL LOG DE POSTGRESQL
+Fecha: 2026-10-15 (-03). Sesión: PID 29720.
+Se sustituyeron los literales de correo y contraseña por marcadores.
+Se omitieron líneas duplicadas CONTEXTO/SENTENCIA, consultas de metadatos
+del cliente y repeticiones de la misma lectura. No se añadieron resultados
+de consultas que no estuvieran registrados en el log.
+
+2026-10-15 12:05:20.846 -03 [29720] postgres@foodstore_tp_u5 LOG:  ejecutar <unnamed>: SET LOCAL ROLE app_web
+2026-10-15 12:05:20.847 -03 [29720] postgres@foodstore_tp_u5 LOG:  ejecutar <unnamed>: SELECT current_user AS usuario_efectivo, session_user AS usuario_sesion
+
+2026-10-15 12:05:26.819 -03 [29720] postgres@foodstore_tp_u5 LOG:  ejecutar <unnamed>: SELECT public.fn_autenticar('<CORREO_A>', '<CLAVE_A>') AS intento_1_fallido
+2026-10-15 12:05:26.859 -03 [29720] postgres@foodstore_tp_u5 LOG:  fn_autenticar: intento resultado=FALLO
+2026-10-15 12:05:30.940 -03 [29720] postgres@foodstore_tp_u5 LOG:  ejecutar <unnamed>: SELECT public.fn_autenticar('<CORREO_A>', '<CLAVE_B>') AS intento_2_fallido
+2026-10-15 12:05:30.948 -03 [29720] postgres@foodstore_tp_u5 LOG:  fn_autenticar: intento resultado=FALLO
+2026-10-15 12:05:34.688 -03 [29720] postgres@foodstore_tp_u5 LOG:  ejecutar <unnamed>: SELECT public.fn_autenticar('<CORREO_B>', '<CLAVE_C>') AS intento_3_fallido
+2026-10-15 12:05:34.691 -03 [29720] postgres@foodstore_tp_u5 LOG:  fn_autenticar: intento resultado=FALLO
+2026-10-15 12:05:39.888 -03 [29720] postgres@foodstore_tp_u5 LOG:  ejecutar <unnamed>: SELECT public.fn_autenticar('<CORREO_A>', '<CLAVE_D>') AS intento_exitoso
+2026-10-15 12:05:39.895 -03 [29720] postgres@foodstore_tp_u5 LOG:  fn_autenticar: intento resultado=OK
+
+2026-10-15 12:06:18.394 -03 [29720] postgres@foodstore_tp_u5 LOG:  ejecutar <unnamed>: SELECT id_usuario, eliminado FROM public.usuario
+2026-10-15 12:07:12.474 -03 [29720] postgres@foodstore_tp_u5 LOG:  ejecutar <unnamed>: SAVEPOINT sp_intento_grant
+2026-10-15 12:07:12.474 -03 [29720] postgres@foodstore_tp_u5 LOG:  ejecutar <unnamed>: GRANT admin_datos TO app_web
+2026-10-15 12:07:12.483 -03 [29720] postgres@foodstore_tp_u5 ERROR:  se ha denegado el permiso para otorgar el rol «admin_datos»
+2026-10-15 12:07:12.483 -03 [29720] postgres@foodstore_tp_u5 DETALLE:  Sólo los roles con la opción ADMIN en el rol «admin_datos» pueden otorgar este rol.
+2026-10-15 12:08:06.139 -03 [29720] postgres@foodstore_tp_u5 LOG:  ejecutar <unnamed>: ROLLBACK TO SAVEPOINT sp_intento_grant
+2026-10-15 12:08:19.162 -03 [29720] postgres@foodstore_tp_u5 LOG:  ejecutar <unnamed>: ROLLBACK
