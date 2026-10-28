@@ -1,5 +1,6 @@
 # Local database backups can be large and may contain data; keep them outside Git.
 backups/
+logs/
 *.backup
 *.dump
 *.sql.gz
