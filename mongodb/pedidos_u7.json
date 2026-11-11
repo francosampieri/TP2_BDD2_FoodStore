@@ -1,0 +1,55 @@
+[
+  {
+    "_id": 2,
+    "fecha": "2026-03-05",
+    "estado": "TERMINADO",
+    "cliente": { "id_usuario": 2, "alias": "Usuario 2" },
+    "items": [
+      { "id_producto": 1, "nombre_producto": "Muzzarella", "cantidad": 2, "precio_unitario": { "$numberDecimal": "3500.00" }, "subtotal": { "$numberDecimal": "7000.00" } },
+      { "id_producto": 13, "nombre_producto": "Coca Cola", "cantidad": 2, "precio_unitario": { "$numberDecimal": "1200.00" }, "subtotal": { "$numberDecimal": "2400.00" } }
+    ],
+    "total": { "$numberDecimal": "9400.00" }
+  },
+  {
+    "_id": 3,
+    "fecha": "2026-03-12",
+    "estado": "TERMINADO",
+    "cliente": { "id_usuario": 3, "alias": "Usuario 3" },
+    "items": [
+      { "id_producto": 9, "nombre_producto": "Clasica", "cantidad": 1, "precio_unitario": { "$numberDecimal": "2800.00" }, "subtotal": { "$numberDecimal": "2800.00" } },
+      { "id_producto": 14, "nombre_producto": "Agua", "cantidad": 3, "precio_unitario": { "$numberDecimal": "800.00" }, "subtotal": { "$numberDecimal": "2400.00" } }
+    ],
+    "total": { "$numberDecimal": "5200.00" }
+  },
+  {
+    "_id": 6,
+    "fecha": "2026-04-25",
+    "estado": "CANCELADO",
+    "cliente": { "id_usuario": 5, "alias": "Usuario 5" },
+    "items": [
+      { "id_producto": 11, "nombre_producto": "Bacon", "cantidad": 1, "precio_unitario": { "$numberDecimal": "3600.00" }, "subtotal": { "$numberDecimal": "3600.00" } }
+    ],
+    "total": { "$numberDecimal": "3600.00" }
+  },
+  {
+    "_id": 11,
+    "fecha": "2026-06-15",
+    "estado": "CONFIRMADO",
+    "cliente": { "id_usuario": 4, "alias": "Usuario 4" },
+    "items": [
+      { "id_producto": 22, "nombre_producto": "Ravioles", "cantidad": 2, "precio_unitario": { "$numberDecimal": "2900.00" }, "subtotal": { "$numberDecimal": "5800.00" } }
+    ],
+    "total": { "$numberDecimal": "5800.00" }
+  },
+  {
+    "_id": 12,
+    "fecha": "2026-06-28",
+    "estado": "TERMINADO",
+    "cliente": { "id_usuario": 6, "alias": "Usuario 6" },
+    "items": [
+      { "id_producto": 9, "nombre_producto": "Clasica", "cantidad": 3, "precio_unitario": { "$numberDecimal": "2800.00" }, "subtotal": { "$numberDecimal": "8400.00" } },
+      { "id_producto": 14, "nombre_producto": "Agua", "cantidad": 2, "precio_unitario": { "$numberDecimal": "800.00" }, "subtotal": { "$numberDecimal": "1600.00" } }
+    ],
+    "total": { "$numberDecimal": "10000.00" }
+  }
+]
