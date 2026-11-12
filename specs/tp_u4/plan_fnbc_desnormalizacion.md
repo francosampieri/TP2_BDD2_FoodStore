@@ -759,3 +759,347 @@ Secciones sugeridas y su contenido:
 | 8 | Inmediatamente después del `REFRESH` y antes de insertar nuevos datos | Ejecutar EXCEPT dirección A (directa EXCEPT vista) | 0 filas |
 | 9 | Ídem | Ejecutar EXCEPT dirección B (vista EXCEPT directa) | 0 filas |
 | 10 | Con vista y datos disponibles | Ejecutar `EXPLAIN ANALYZE` sobre la lectura de la vista | Registrar `Execution Time` y completar la tabla del informe |
+
+---
+
+## Parte 4 — Plan de migración reversible
+
+> Esta sección especifica cómo ejecutar la migración de `control_lote_almacen`
+> a R1 y R2 de forma segura, con validación integrada y rollback explícito ante
+> cualquier diferencia. La prueba se realiza en una **copia nueva de `foodstore_tp5`**,
+> nunca en `foodstore`, `foodstore_tp2`, `foodstore_tp3`, `foodstore_tp4`,
+> `foodstore_tp5` ni `foodstore_tp_u4`.
+>
+> Los nombres, tipos e IDs de esta sección son los exactos de
+> `sql/tp_fnbc_control_lote.sql`. Si hay discrepancia, el SQL prevalece.
+
+---
+
+### 4.1 Base de trabajo para la migración
+
+| Aspecto | Detalle |
+|---|---|
+| Base de prueba | Copia nueva de `foodstore_tp5`, denominada `foodstore_tp_u4_mig` o similar. |
+| Nunca tocar | `foodstore`, `foodstore_tp2`, `foodstore_tp3`, `foodstore_tp4`, `foodstore_tp5`, `foodstore_tp_u4`. |
+| Por qué una copia nueva | La migración incluye `CREATE TABLE`, `INSERT` y `CREATE VIEW`; si algo sale mal, basta con eliminar la base de prueba. |
+
+> **Validación manual requerida en DBeaver:**
+> Crear la copia antes de ejecutar cualquier bloque de esta sección:
+> `CREATE DATABASE foodstore_tp_u4_mig TEMPLATE foodstore_tp5;`
+> Conectarse a esa base y no volver a cambiar de conexión durante toda la sesión.
+
+---
+
+### 4.2 Precondiciones
+
+Verificar manualmente en DBeaver **antes de abrir la transacción**. Si alguna falla,
+no abrir el `BEGIN`.
+
+| # | Precondición | Consulta de verificación | Resultado esperado |
+|---|---|---|---|
+| P1 | La base activa es la copia de prueba | `SELECT current_database();` | `foodstore_tp_u4_mig` (o el nombre elegido) |
+| P2 | `id_usuario IN (1, 2)` existen y no están eliminados | `SELECT id_usuario, nombre_usuario, apellido, eliminado FROM usuario WHERE id_usuario IN (1,2) ORDER BY id_usuario;` | 2 filas con `eliminado = FALSE` |
+| P3 | No existe `control_lote_almacen` | `SELECT to_regclass('public.control_lote_almacen');` | `NULL` |
+| P4 | No existe `tp_u4_deposito` | `SELECT to_regclass('public.tp_u4_deposito');` | `NULL` |
+| P5 | No existe `tp_u4_lote` | `SELECT to_regclass('public.tp_u4_lote');` | `NULL` |
+| P6 | No existe `tp_u4_responsable_control` | `SELECT to_regclass('public.tp_u4_responsable_control');` | `NULL` |
+| P7 | No existe `tp_u4_responsable_usuario` | `SELECT to_regclass('public.tp_u4_responsable_usuario');` | `NULL` |
+| P8 | No existe `tp_u4_r1_responsable_deposito` | `SELECT to_regclass('public.tp_u4_r1_responsable_deposito');` | `NULL` |
+| P9 | No existe `tp_u4_r2_lote_responsable` | `SELECT to_regclass('public.tp_u4_r2_lote_responsable');` | `NULL` |
+| P10 | No existe la vista | `SELECT to_regclass('public.tp_u4_v_control_lote_almacen');` | `NULL` |
+
+---
+
+### 4.3 Estructura de la transacción
+
+Todo el DDL y DML de la migración se ejecuta dentro de un único bloque
+`BEGIN … COMMIT`. Ningún paso se confirma por separado.
+
+```
+BEGIN;
+
+  -- Bloque A: tablas maestras con IDs literales (SIN IDENTITY)
+  -- Bloque B: poblado de maestras y tabla de correspondencia con usuario
+  -- Bloque C: relación original con FKs hacia las maestras
+  -- Bloque D: R1 y R2 (descomposición FNBC)
+  -- Bloque E: migración de datos con INSERT … SELECT directo
+  -- Bloque F: vista de compatibilidad
+  -- Bloque G: validación EXCEPT (DO $$ … $$; si falla, la transacción queda
+  --           abortada y el operador ejecuta ROLLBACK en la misma conexión)
+
+COMMIT;   -- solo si el Bloque G no levantó excepción
+```
+
+**Comportamiento de errores:**
+PostgreSQL marca la transacción como abortada ante cualquier error de sentencia,
+pero no ejecuta `ROLLBACK` por sí solo: el operador debe ejecutarlo manualmente
+en la misma conexión de DBeaver. Hasta ese momento, ninguna nueva sentencia válida
+puede ejecutarse ("ERROR: current transaction is aborted"). Una vez ejecutado
+`ROLLBACK`, la base queda exactamente como estaba antes del `BEGIN`.
+
+---
+
+### 4.4 Bloque A — Tablas maestras con IDs literales
+
+Las tres tablas maestras usan `BIGINT PRIMARY KEY` **sin** `GENERATED ALWAYS AS IDENTITY`.
+Los IDs de la consigna (30, 31, 501, 502, 503, 801, 802) se insertan como valores
+literales y se conservan en todo el ejercicio.
+
+```
+tp_u4_deposito(
+    id_deposito BIGINT PRIMARY KEY,    -- 30, 31
+    nombre      VARCHAR(80) NOT NULL UNIQUE
+)
+
+tp_u4_lote(
+    id_lote  BIGINT PRIMARY KEY,       -- 501, 502, 503
+    nombre   VARCHAR(80) NOT NULL UNIQUE
+)
+
+tp_u4_responsable_control(
+    id_responsable BIGINT PRIMARY KEY, -- 801, 802
+    nombre         VARCHAR(80) NOT NULL UNIQUE
+)
+```
+
+---
+
+### 4.5 Bloque B — Poblado de maestras y tabla de correspondencia con `usuario`
+
+Dentro del mismo `BEGIN`:
+
+1. INSERT en `tp_u4_deposito`: `(30, 'Deposito A')`, `(31, 'Deposito B')`.
+2. INSERT en `tp_u4_lote`: `(501,'Lote 501')`, `(502,'Lote 502')`, `(503,'Lote 503')`.
+3. INSERT en `tp_u4_responsable_control`: `(801,'Responsable 1')`, `(802,'Responsable 2')`.
+4. Creación de `tp_u4_responsable_usuario` — tabla separada con FK a
+   `tp_u4_responsable_control` y FK a `usuario`. Vincula los IDs literales de la
+   consigna con `usuario.id_usuario` del seed, **sin** reemplazar los IDs en R1/R2.
+5. INSERT en `tp_u4_responsable_usuario`: `(801, 1)`, `(802, 2)`.
+
+```
+tp_u4_responsable_usuario(
+    id_responsable BIGINT NOT NULL PRIMARY KEY
+                   REFERENCES tp_u4_responsable_control(id_responsable),
+    id_usuario     BIGINT NOT NULL UNIQUE
+                   REFERENCES usuario(id_usuario)
+)
+```
+
+**Por qué una tabla separada:** R1 y R2 operan con los IDs literales 801/802 de la
+consigna. La correspondencia con `usuario.id_usuario` es un metadato del ejercicio
+que no forma parte de la descomposición FNBC; mantenerla separada evita alterar la
+semántica de R1/R2.
+
+---
+
+### 4.6 Bloque C — Relación original con FKs
+
+Dentro del mismo `BEGIN`, se crea `control_lote_almacen` con FKs hacia las tres
+tablas maestras. Es la **fuente de reversión**; permanece en la base después del
+`COMMIT` y nunca se elimina en la migración normal.
+
+```
+control_lote_almacen(
+    lote_id                BIGINT NOT NULL REFERENCES tp_u4_lote(id_lote),
+    deposito_id            BIGINT NOT NULL REFERENCES tp_u4_deposito(id_deposito),
+    responsable_control_id BIGINT NOT NULL REFERENCES tp_u4_responsable_control(id_responsable),
+    PRIMARY KEY (lote_id, deposito_id)
+)
+```
+
+Filas a insertar:
+
+| lote_id | deposito_id | responsable_control_id |
+|---|---|---|
+| 501 | 30 | 801 |
+| 502 | 30 | 801 |
+| 503 | 31 | 802 |
+
+---
+
+### 4.7 Bloque D — R1 y R2 (descomposición FNBC)
+
+Dentro del mismo `BEGIN`:
+
+```
+tp_u4_r1_responsable_deposito(
+    responsable_control_id BIGINT NOT NULL PRIMARY KEY
+                           REFERENCES tp_u4_responsable_control(id_responsable),
+    deposito_id            BIGINT NOT NULL
+                           REFERENCES tp_u4_deposito(id_deposito)
+)
+
+tp_u4_r2_lote_responsable(
+    lote_id                BIGINT NOT NULL REFERENCES tp_u4_lote(id_lote),
+    responsable_control_id BIGINT NOT NULL
+                           REFERENCES tp_u4_r1_responsable_deposito(responsable_control_id),
+    PRIMARY KEY (lote_id, responsable_control_id)
+)
+```
+
+La FK de R2 referencia la PK de R1 (`responsable_control_id`), garantizando que no
+puede existir una asignación de lote a un responsable sin depósito registrado en R1.
+
+---
+
+### 4.8 Bloque E — Migración con INSERT … SELECT directo
+
+Porque las tablas maestras conservan los IDs literales de la consigna, la migración
+no necesita CTEs ni JOINs por nombre.
+
+Dentro del mismo `BEGIN`:
+
+1. INSERT en R1: `SELECT DISTINCT responsable_control_id, deposito_id FROM control_lote_almacen`.
+   Resultado esperado: 2 filas.
+2. INSERT en R2: `SELECT lote_id, responsable_control_id FROM control_lote_almacen`.
+   Resultado esperado: 3 filas.
+
+**Ningún paso modifica `control_lote_almacen`.**
+
+---
+
+### 4.9 Bloque F — Vista de compatibilidad
+
+Dentro del mismo `BEGIN`:
+
+```
+tp_u4_v_control_lote_almacen AS
+SELECT
+    r2.lote_id                AS lote_id,
+    r1.deposito_id            AS deposito_id,
+    r2.responsable_control_id AS responsable_control_id
+FROM   tp_u4_r2_lote_responsable r2
+JOIN   tp_u4_r1_responsable_deposito r1
+    ON r1.responsable_control_id = r2.responsable_control_id
+```
+
+La vista proyecta `r2.lote_id`, `r1.deposito_id` y `r2.responsable_control_id`.
+No expone `id_usuario` ni ninguna columna del esquema FoodStore.
+
+---
+
+### 4.10 Bloque G — Validación EXCEPT
+
+Dentro del mismo `BEGIN`, **inmediatamente después de crear la vista**:
+
+```
+DO $$
+DECLARE
+    v_diff_a INTEGER;
+    v_diff_b INTEGER;
+BEGIN
+    SELECT COUNT(*) INTO v_diff_a
+    FROM (
+        SELECT lote_id, deposito_id, responsable_control_id
+        FROM   control_lote_almacen
+        EXCEPT
+        SELECT lote_id, deposito_id, responsable_control_id
+        FROM   tp_u4_v_control_lote_almacen
+    ) t;
+
+    SELECT COUNT(*) INTO v_diff_b
+    FROM (
+        SELECT lote_id, deposito_id, responsable_control_id
+        FROM   tp_u4_v_control_lote_almacen
+        EXCEPT
+        SELECT lote_id, deposito_id, responsable_control_id
+        FROM   control_lote_almacen
+    ) t;
+
+    IF v_diff_a > 0 OR v_diff_b > 0 THEN
+        RAISE EXCEPTION
+            'Validación EXCEPT fallida: dirección A = %, dirección B = %',
+            v_diff_a, v_diff_b;
+    END IF;
+END;
+$$;
+```
+
+**Si `RAISE EXCEPTION` se ejecuta:** la transacción queda abortada. El operador
+debe ejecutar `ROLLBACK` en la misma conexión de DBeaver. Ninguna tabla ni dato
+nuevo queda persistido.
+
+**Si el bloque termina sin excepción:** `v_diff_a = 0` y `v_diff_b = 0`; la
+migración es equivalente a la relación original y la transacción puede confirmarse.
+
+---
+
+### 4.11 Revisión antes del COMMIT
+
+Antes de ejecutar `COMMIT`, verificar visualmente (dentro de la transacción abierta):
+
+| # | Consulta de revisión | Resultado esperado |
+|---|---|---|
+| R1 | `SELECT * FROM control_lote_almacen ORDER BY lote_id;` | 3 filas: (501,30,801), (502,30,801), (503,31,802) |
+| R2 | `SELECT * FROM tp_u4_v_control_lote_almacen ORDER BY lote_id;` | 3 filas idénticas a R1 |
+| R3 | `SELECT * FROM tp_u4_r1_responsable_deposito ORDER BY responsable_control_id;` | 2 filas: (801,30), (802,31) |
+| R4 | `SELECT * FROM tp_u4_r2_lote_responsable ORDER BY lote_id;` | 3 filas: (501,801), (502,801), (503,802) |
+| R5 | `SELECT id_responsable, id_usuario FROM tp_u4_responsable_usuario ORDER BY id_responsable;` | 2 filas: (801,1), (802,2) |
+
+Solo ejecutar `COMMIT` si todas las consultas coinciden. Si alguna no coincide,
+ejecutar `ROLLBACK` y revisar el bloque correspondiente.
+
+---
+
+### 4.12 ROLLBACK ante cualquier error
+
+**Cuándo ejecutar ROLLBACK:**
+- Cualquier sentencia dentro del `BEGIN` produce un error (la transacción queda
+  abortada; el operador ejecuta `ROLLBACK` en la misma conexión de DBeaver).
+- El Bloque G levanta la excepción EXCEPT.
+- Cualquier consulta de revisión (sección 4.11) no coincide con el resultado esperado.
+- El operador tiene cualquier duda antes de confirmar.
+
+**Efecto:**
+- Ninguna tabla ni vista de la migración queda creada.
+- La base de prueba queda exactamente en el estado anterior al `BEGIN`.
+- En PostgreSQL, el DDL es transaccional: `ROLLBACK` deshace `CREATE TABLE` y
+  `CREATE VIEW` ejecutados dentro del mismo `BEGIN`.
+
+---
+
+### 4.13 Reversión post-COMMIT — qué conservar y qué retirar
+
+Después de un `COMMIT` exitoso, `control_lote_almacen` **y sus tablas maestras**
+(`tp_u4_deposito`, `tp_u4_lote`, `tp_u4_responsable_control`,
+`tp_u4_responsable_usuario`) permanecen en la base como fuente de reversión.
+
+`control_lote_almacen` tiene FK hacia las tres maestras de ID literales. Si se
+intentara eliminar alguna maestra, PostgreSQL rechazaría la operación por FK activa.
+Por eso la reversión solo retira la vista, R2 y R1, respetando las dependencias
+**sin usar CASCADE**:
+
+```
+BEGIN;
+  DROP VIEW  tp_u4_v_control_lote_almacen;
+  DROP TABLE tp_u4_r2_lote_responsable;         -- referencia FK → R1
+  DROP TABLE tp_u4_r1_responsable_deposito;     -- referencia FK → maestras
+  -- Las tablas maestras, tp_u4_responsable_usuario y control_lote_almacen
+  -- NO se eliminan: son la fuente de reversión con los datos originales.
+COMMIT;
+```
+
+Cada `DROP TABLE` debe ejecutarse en el orden indicado; invertirlo produce un error
+de FK y aborta la transacción. Tras esta reversión parcial, `control_lote_almacen`
+sigue disponible con las tres filas originales y puede usarse para repetir la
+migración desde cero.
+
+---
+
+### 4.14 Qué registrar en el informe
+
+| # | Qué registrar | Qué debe mostrar |
+|---|---|---|
+| E1 | `SELECT current_database()` antes del `BEGIN` | Nombre de la base de prueba (no `foodstore_tp5` ni `foodstore_tp_u4`) |
+| E2 | Resultado de P1–P10 (precondiciones) | Todos los valores esperados de la sección 4.2 |
+| E3 | Salida del Bloque G (`DO $$ … $$`) | Ausencia de mensaje de error; `DO` finalizado sin excepción |
+| E4 | Resultado de R1–R5 (revisión pre-COMMIT) | Filas exactas de la sección 4.11 |
+| E5 | `SELECT * FROM tp_u4_v_control_lote_almacen ORDER BY lote_id` post-COMMIT | 3 filas: (501,30,801), (502,30,801), (503,31,802) |
+| E6 | EXCEPT dirección A post-COMMIT | 0 filas |
+| E7 | EXCEPT dirección B post-COMMIT | 0 filas |
+
+**Lo que el informe no debe afirmar:**
+- No indicar que la migración "ya fue ejecutada" en ninguna base productiva.
+- No reutilizar tiempos ni resultados de TPs anteriores.
+- Si la prueba aún no se realizó, dejar E3–E7 como "pendiente de ejecución" y
+  completarlos con los valores reales después de ejecutar.

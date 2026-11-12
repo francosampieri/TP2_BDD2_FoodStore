@@ -1,44 +1,44 @@
 # FoodStore Database Project
 
-Base de datos relacional para el sistema de gestión de pedidos gastronómicos **FoodStore**, implementada sobre **PostgreSQL**.
+Proyecto de datos **FoodStore** sobre PostgreSQL 17, con prácticas documentales en MongoDB y una base local SQLite para la tablet. PostgreSQL es la fuente de verdad de pedidos y stock.
 
 ---
 
 ## Requisitos Previos
 
-- **PostgreSQL** 14 o superior instalado.
-- Cliente SQL: **pgAdmin 4**, **DBeaver**, **VS Code (extensión PostgreSQL)** o la terminal interactiva **`psql`**.
+- **PostgreSQL 16 o superior** (las pruebas documentadas se hicieron con PostgreSQL 17).
+- **DBeaver** para ejecutar los scripts y las pruebas PostgreSQL. Para las otras unidades se usaron MongoDB Compass y SQLite.
 
 ---
 
 ## 1. Creación de la Base de Datos
 
-Ejecuta el siguiente comando en tu cliente SQL o terminal:
+El primer renglón de `sql/schema.sql` contiene este comando. Ejecutarlo **una sola vez**, conectado a la base administrativa `postgres`:
 
 ```sql
-CREATE DATABASE "FoodStore";
+CREATE DATABASE FoodStore;
 ```
 
-> **Nota:** Conéctate a la base de datos recién creada (`FoodStore`) antes de ejecutar los scripts siguientes.
+> **Nota:** Al no estar entre comillas, PostgreSQL guarda el nombre como `foodstore`. Conectarse a `foodstore` y ejecutar el resto de `sql/schema.sql`, **sin repetir** su primera línea.
 
 ---
 
 ## 2. Orden de Ejecución de los Scripts
 
-Los scripts deben ejecutarse estrictamente en el siguiente orden secuencial para garantizar la integridad referencial y las dependencias de objetos:
+La carga inicial en una base vacía sigue este orden. Los scripts de consultas y pruebas se ejecutan después, de forma selectiva, sobre una copia de trabajo porque varios modifican datos:
 
 | Paso | Archivo | Descripción |
 | :--: | :--- | :--- |
-| **1** | `schema.sql` | Crea los tipos enumerados (`rol`, `estado_pedido`, `forma_pago`), las tablas relacionales (`categoria`, `producto`, `usuario`, `pedido`, `detalle_pedido`) y los índices de rendimiento. |
-| **2** | `Objects.sql` | Define la lógica de negocio: vistas de consulta (`v_productos_vigentes`, `v_pedidos_resumen`, etc.), funciones auxiliares, triggers de subtotal/total y el procedimiento almacenado transaccional `sp_crear_pedido`. |
-| **3** | `data.sql` | Inserta el conjunto inicial de datos de prueba: categorías, catálogo de productos, usuarios con diferentes roles, pedidos y sus respectivos detalles. |
-| **4** | `queries.sql` | Contiene los casos de uso por épicas (Historias de Usuario) y las consultas analíticas de reportes. |
+| **1** | `sql/schema.sql` (desde la línea 3) | Crea los tipos enumerados (`rol`, `estado_pedido`, `forma_pago`), las tablas relacionales (`categoria`, `producto`, `usuario`, `pedido`, `detalle_pedido`) y los índices. |
+| **2** | `sql/Objects.sql` | Define vistas, funciones, triggers y el procedimiento `sp_crear_pedido`. |
+| **3** | `sql/data.sql` | Inserta los datos iniciales de prueba. |
+| **Pruebas** | `sql/queries.sql` | Contiene consultas y también `INSERT`, `UPDATE` y `CALL`; ejecutar solo las secciones necesarias sobre una copia. |
 
 ---
 
 ## 3. Cómo Reproducir las Pruebas
 
-Para validar el correcto funcionamiento del modelo, las restricciones de integridad y la lógica de negocio, ejecuta las siguientes pruebas en `FoodStore`:
+Para validar restricciones y lógica de negocio, usar una **copia de trabajo** de `foodstore`. Los ejemplos con `CALL` o `UPDATE` alteran datos; envolverlos en una transacción cuando se quiera revertirlos.
 
 ### A. Pruebas de Integridad y Triggers Automáticos
 1. **Comprobar cálculo automático de subtotales y total:**
@@ -163,12 +163,16 @@ docs/
 ├── tp3/     — informe y DUIA de carga masiva y optimización
 ├── tp4/     — informe y DUIA de análisis de planes
 ├── tp5/     — informe y DUIA de índices, vistas y vista materializada
-└── tpi/     — informe y DUIA de la primera entrega parcial integradora
+├── tp_u4/   — FNBC y desnormalización controlada
+├── tp7/     — modelo y consultas MongoDB
+├── tp8/     — SQLite, semáforo e integración
+└── tpi/     — informes, DUIA y auditorías de las entregas integradoras
 
 specs/
 ├── tp2/     — especificación de restricciones
 ├── tp4/     — especificación de consultas analíticas
 ├── tp5/     — especificaciones de índices y vistas
+├── tp_u4/   — plan de FNBC y desnormalización
 └── tpi/     — auditoría y evidencia de normalización del integrador
 ```
 
@@ -218,3 +222,19 @@ sqlite3 movil/foodstore_movil.db < movil/semaforo.sql
 ```
 
 El CSV debe importarse con siete columnas en este orden: `producto_id`, `nombre`, `precio_centavos`, `stock`, `disponible`, `eliminado`, `capturado_en`. `schema_sqlite.sql` crea `snapshot_servidor` con esos nombres y tipos, por lo que no debe usarse la opción de crear tabla nueva al importar.
+
+---
+
+## 7. Segunda entrega parcial del TPI (unidades 4 a 8)
+
+La [auditoría de cobertura](docs/tpi/auditoria_segunda_entrega.md) relaciona los 14 criterios de la consigna con archivos y resultados reales. El [informe técnico](docs/tpi/informe_tpi_segunda_entrega.md) y la [DUIA integradora](docs/tpi/duia_tpi_segunda_entrega.md) consolidan las unidades 4 a 8. Los dos documentos están en borrador hasta completar los pendientes indicados en la auditoría.
+
+| Unidad | Scripts y datos | Evidencia |
+| --- | --- | --- |
+| 4 - FNBC y desnormalización | `sql/tp_fnbc_control_lote.sql`, `sql/tp_desnormalizacion_top_categorias.sql` | `specs/tp_u4/plan_fnbc_desnormalizacion.md`, `docs/tp_u4/informe_tp_u4.md` |
+| 5 - Seguridad y auditoría | `sql/roles.sql`, `sql/auditoria_test.sql`, `sql/autenticacion_u5.sql`, `sql/simulacro_incidente.sql`, `sql/usuario_anon.sql` | `BITACORA.md`, `docs/informe_auditoria.md`, `docs/informe_incidente.md` |
+| 6 - Mantenimiento | `scripts/backup_foodstore.ps1`, `scripts/restore_test.ps1`, `sql/health_check.sql`, `sql/maintenance.sql` | `informe_u6.pdf` |
+| 7 - Documental | `mongodb/pedidos_u7.json`, `mongodb/consultas_mongodb.js`, `sql/consultas_postgresql_u7.sql` | `docs/tp7/informe_tp7.md` |
+| 8 - Tablet | `postgresql/v_snapshot_movil.sql`, `movil/` | `docs/kiro/tp8/`, `docs/tp8/informe_tp8.md`, `docs/tp8/bitacora_ia.md` |
+
+Cada unidad usa una copia o base de pruebas propia. No ejecutar estos scripts secuencialmente sobre `foodstore`: varios crean objetos, modifican datos o configuran el servidor. El informe de cada unidad describe su base, el orden y la validación realizada.
