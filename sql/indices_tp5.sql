@@ -51,12 +51,13 @@ WHERE eliminado = FALSE
 -- ============================================================
 -- 2. Productos no disponibles — índice parcial por nombre
 -- ============================================================
--- Consulta objetivo: productos no disponibles, ordenados por nombre
--- ascendente (para stock/gestión); no filtra por patrón ni prefijo.
+-- Consulta objetivo: productos no disponibles y vigentes, ordenados por
+-- nombre ascendente (para stock/gestión); no filtra por patrón ni prefijo.
 --
 --   SELECT id_producto, nombre_producto, precio, stock
 --   FROM   producto
 --   WHERE  disponible = FALSE
+--     AND  eliminado = FALSE
 --   ORDER  BY nombre_producto ASC;
 --
 -- Plan previo observado:

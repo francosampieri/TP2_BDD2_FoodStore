@@ -54,17 +54,40 @@ RETURNS NUMERIC(12,2) AS $$
       AND  eliminado = FALSE;
 $$ LANGUAGE sql STABLE;
 
--- 1. Trigger BEFORE para autocompletar precio_unitario y calcular subtotal por fila
+-- 1. Trigger BEFORE para calcular precio_unitario y subtotal por fila.
+--    INSERT: ignora el precio recibido y usa el precio actual del producto.
+--    UPDATE: conserva el precio histórico; prohíbe mover el detalle o
+--            cambiar el precio directamente; permite cantidad/eliminado.
 CREATE OR REPLACE FUNCTION fn_set_subtotal()
 RETURNS TRIGGER AS $$
 BEGIN
-    -- Si no se pasó precio_unitario, toma el precio actual del producto
-    IF NEW.precio_unitario IS NULL THEN
+    IF TG_OP = 'INSERT' THEN
+        -- Ignora cualquier precio_unitario recibido: toma el precio actual
         SELECT precio INTO NEW.precio_unitario
-        FROM producto 
+        FROM producto
         WHERE id_producto = NEW.id_producto;
+
+        NEW.subtotal := NEW.cantidad * NEW.precio_unitario;
+        RETURN NEW;
     END IF;
-    
+
+    -- UPDATE: el detalle no puede cambiar de pedido ni de producto
+    IF NEW.id_pedido IS DISTINCT FROM OLD.id_pedido
+       OR NEW.id_producto IS DISTINCT FROM OLD.id_producto THEN
+        RAISE EXCEPTION
+            'No se puede mover un detalle a otro pedido o producto (id_detalle %)',
+            OLD.id_detalle;
+    END IF;
+
+    -- UPDATE: el precio histórico no se modifica directamente
+    IF NEW.precio_unitario IS DISTINCT FROM OLD.precio_unitario THEN
+        RAISE EXCEPTION
+            'No se puede modificar precio_unitario directamente (id_detalle %)',
+            OLD.id_detalle;
+    END IF;
+
+    -- Conserva el precio histórico y recalcula el subtotal
+    NEW.precio_unitario := OLD.precio_unitario;
     NEW.subtotal := NEW.cantidad * NEW.precio_unitario;
     RETURN NEW;
 END;

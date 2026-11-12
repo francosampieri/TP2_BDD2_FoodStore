@@ -173,3 +173,48 @@ specs/
 ```
 
 Los entregables en PDF se ubican junto con la documentación de su respectivo TP. El informe técnico de la primera entrega integradora está en `docs/tpi/TPI_FoodStore_Primera_Entrega_Parcial.pdf`.
+
+---
+
+## 6. TP8 - Tablet SQLite y sincronización simulada
+
+**Base central de pruebas:** `foodstore_u8`, creada como copia de `foodstore`. **Base local:** `movil/foodstore_movil.db` (SQLite 3.37+). La tablet nunca crea pedidos ni cambia stock en PostgreSQL; `SIMULADO_APROBADO` es solo un resultado de simulación.
+
+### Crear desde cero
+
+1. En PostgreSQL, conectado a la base `postgres` y sin conexiones abiertas a `foodstore`, crear `foodstore_u8` con `CREATE DATABASE foodstore_u8 WITH TEMPLATE foodstore OWNER postgres;`. Si ya existe, no repetir la creación.
+2. Conectarse a `foodstore_u8` y ejecutar `postgresql/v_snapshot_movil.sql`.
+3. Exportar `v_snapshot_movil` a `movil/servidor_snapshot.csv` con encabezados y separador coma. Al exportar desde DBeaver, convertir `disponible` y `eliminado` explícitamente a `'t'`/`'f'`, porque los scripts SQLite esperan esos valores. La consulta usada figura debajo.
+4. Crear una base SQLite vacía y ejecutar `movil/schema_sqlite.sql`. Verificar `PRAGMA foreign_keys;` = `1` en cada conexión que vaya a escribir.
+5. Vaciar `snapshot_servidor`, importar el CSV **en la tabla existente**, y ejecutar `movil/cargar_snapshot.sql` para actualizar `producto_cache` mediante UPSERT. No usar `INSERT OR REPLACE`, que puede romper referencias de los ítems.
+6. Ejecutar una sola vez `movil/datos_casos.sql` y `movil/pruebas_sqlite.sql`. Los intentos inválidos de C7 están comentados: ejecutarlos por separado, observar el error y cerrar cada transacción con `ROLLBACK`.
+7. En `foodstore_u8`, cambiar el precio del producto elegido para C2 y dar de baja lógicamente el elegido para C4. Exportar otra instantánea y repetir el paso 5. La copia inicial puede conservarse como `movil/servidor_snapshot_inicial.csv`.
+8. Ejecutar `movil/semaforo.sql`. Verificar C2=`CONFLICTO`, C3 y C4=`RECHAZADO`, C5 y C6=`SIMULADO_APROBADO`. Para C2, aceptar el precio nuevo en el ítem, crear una solicitud **con otro UUID** y ejecutar de nuevo el semáforo.
+9. Para C6, **después** de que el semáforo haya evaluado la solicitud, ejecutar por separado el `INSERT` duplicado comentado en `movil/datos_casos.sql`. Debe fallar por `cola_sync.solicitud_uuid`; consultar luego la misma fila para comprobar que conserva el estado y que su cantidad sigue siendo uno.
+10. En PostgreSQL, comprobar el conteo de `pedido` y el stock. La simulación no debe haber creado una venta ni descontado unidades. El informe y la bitácora están en `docs/tp8/`; los requisitos previos de Kiro están en `docs/kiro/tp8/`.
+
+Consulta de exportación desde DBeaver:
+
+```sql
+SELECT producto_id, nombre, precio_centavos, stock,
+       CASE WHEN disponible THEN 't' ELSE 'f' END AS disponible,
+       CASE WHEN eliminado THEN 't' ELSE 'f' END AS eliminado,
+       to_char(capturado_en AT TIME ZONE 'UTC',
+               'YYYY-MM-DD"T"HH24:MI:SS"Z"') AS capturado_en
+FROM v_snapshot_movil
+ORDER BY producto_id;
+```
+
+Si se usa la consola `sqlite3`, la secuencia básica es:
+
+```text
+sqlite3 movil/foodstore_movil.db < movil/schema_sqlite.sql
+sqlite3 movil/foodstore_movil.db "DELETE FROM snapshot_servidor;"
+sqlite3 movil/foodstore_movil.db ".import --csv --skip 1 movil/servidor_snapshot.csv snapshot_servidor"
+sqlite3 movil/foodstore_movil.db < movil/cargar_snapshot.sql
+sqlite3 movil/foodstore_movil.db < movil/datos_casos.sql
+sqlite3 movil/foodstore_movil.db < movil/pruebas_sqlite.sql
+sqlite3 movil/foodstore_movil.db < movil/semaforo.sql
+```
+
+El CSV debe importarse con siete columnas en este orden: `producto_id`, `nombre`, `precio_centavos`, `stock`, `disponible`, `eliminado`, `capturado_en`. `schema_sqlite.sql` crea `snapshot_servidor` con esos nombres y tipos, por lo que no debe usarse la opción de crear tabla nueva al importar.
